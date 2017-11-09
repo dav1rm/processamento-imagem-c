@@ -12,6 +12,12 @@ Imagem *criarImagem(int altura, int largura, int valmax)
 
 Imagem *lerArquivoPpm(char *nome_arquivo)
 {
+    int largura, altura, valmax;
+    Imagem *imagem = NULL;
+    char formato[128];
+    char comentario[100];
+    char c;
+
     FILE *arquivo = fopen(nome_arquivo, "r"); //Abrindo arquivo em modo leitura
 
     if (arquivo == NULL) //Verificando se o arquivo foi lido corretamente
@@ -20,13 +26,8 @@ Imagem *lerArquivoPpm(char *nome_arquivo)
         return 0;
     }
 
-    int largura, altura, valmax;
-    Imagem *imagem = NULL;
-    char formato[128];
-    char b[100];
-    char c;
-    fscanf(arquivo, "%s", formato);
-    if (strcmp(formato, "P3") != 0)
+    fscanf(arquivo, "%s", formato); //Salva o formato do arquivo ppm
+    if (strcmp(formato, "P3") != 0) //Verifica se é do formatp P3
     {
         printf("A imagem não é do formato p3\n");
         fclose(arquivo);
@@ -34,13 +35,13 @@ Imagem *lerArquivoPpm(char *nome_arquivo)
     }
 
     c = getc(arquivo);
-    if (c == '\n' || c == '\r') // Skip any line break and comments
+    if (c == '\n' || c == '\r') // Ignora quebra de linha ou espaçamento
     {
         c = getc(arquivo);
         while (c == '#')
         {
-            fscanf(arquivo, "%[^\n\r] ", b);
-            //printf("%s\n", b);
+            fscanf(arquivo, "%[^\n\r] ", comentario); //Salva o comentario
+            //printf("%s\n", b); //Imprime o comentário
             c = getc(arquivo);
         }
         ungetc(c, arquivo);
@@ -72,7 +73,7 @@ Imagem *aplicarFiltroCinza(Imagem *imagem)
     int cinza;
     for (int i = 0; i < imagem->altura * imagem->largura; i++)
     {
-        cinza = ((imagem->pixels[i].r)*0.3)+((imagem->pixels[i].g)*0.59)+((imagem->pixels[i].b)*0.11);
+        cinza = ((imagem->pixels[i].r)*0.3)+((imagem->pixels[i].g)*0.59)+((imagem->pixels[i].b)*0.11); //Calcula escala de cinza
         imagem->pixels[i].r = cinza;
         imagem->pixels[i].g = cinza;
         imagem->pixels[i].b = cinza;
