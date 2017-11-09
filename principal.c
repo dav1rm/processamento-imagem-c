@@ -8,36 +8,29 @@
 #define MAX 1020     /* tamanho maximo para a matriz \
     e, consequentemente, para a figura, em pixels)*/
 
-/*-----------------------------------------------------------
- void skipComment(FILE *fin)
- PPM allows comment lines, this routine skips over comments
- fin points an already open (binary read) file
- ------------------------------------------------------------*/
-void skipComment(FILE *fin)
-{
-    char buf[120]; // assumes at most 120 character comments
+    typedef struct Pixel{
+        int r;
+        int g;
+        int b;
+    } Pixel;
+    
+    typedef struct Imagem{
+        int largura;
+        int altura;
+        int valmax;
+        Pixel *pixels;
+    } Imagem;
 
-    while (1)
-    {
-        fscanf(fin, "%1s", &buf);
-        if (buf[0] != '#')
-        {
-            ungetc(buf[0], fin);
-            return;
-        }
-        else
-            fgets(buf, 120, fin); /* skip comment line */
-    }
-}
+/*LEITURA DE IMAGEM */
 
-int main()
-{
-    FILE *arq;
-    char fname[MAX_NAME];
+Imagem * lerImagem(char *fname){
     char key[128];
+    char b[100];
+    char *image;
+    char c;
+    int red, blue, green;
     int i, j, n, m, max, M[MAX][MAX];
-    printf("Digite o nome do arquivo PPM de entrada: ");
-    scanf("%s", fname);
+   
     arq = fopen(fname, "r");
     if (arq == NULL)
     {
@@ -53,35 +46,45 @@ int main()
         return 0;
     }
 
-    char buf[120]; // assumes at most 120 character comments
-
-    while (1)
+    c = getc(arq);
+    if (c == '\n' || c == '\r') // Skip any line break and comments
     {
-        fscanf(arq, "%1s", &buf);
-        if (buf[0] != '#')
+        c = getc(arq);
+        while(c == '#') 
         {
-            ungetc(buf[0], arq);
+            fscanf(arq, "%[^\n\r] ", b);
+            printf("%s\n",b);
+            c = getc(arq);
         }
-        else
-            fgets(buf, 120, arq); /* skip comment line */
+        ungetc(c,arq); 
+    }
+    fscanf(arq, "%d %d %d", &n, &m, &max);
+    
+    printf("%d rows  %d columns  max value= %d\n",n,m,max);
+    
+    int numbytes = n * m * 3;
+    image = (char *) malloc(numbytes);
+    if (image == NULL)
+    {
+        printf("Memory allocation failed!\n"); 
     }
 
-    fscanf(arq, "%d %d", &m, &n);
-    printf("formato: %d\n", m);
-    /* le os dados da imagem e armazena na matrix M */
-    for (i = 0; i <= n - 1; i++)
-        for (j = 0; j <= m - 1; j++)
-            fscanf(arq, " %d ", &M[i][j]);
-
-    for (i = 0; i <= n - 1; i++)
-    {
-        for (j = 0; j <= m - 1; j++)
-        {
-            printf(" %d ", M[i][j]);
-        }
-        printf("\n");
+	for(i=m-1;i>=0;i--) for(j=0;j<n;j++) // Important bug fix here!
+    { // i = row, j = column
+        fscanf(arq,"%d %d %d",&red, &green, &blue );
+        image[(i*n+j)*3]=red * 255 / max;
+        image[(i*n+j)*3+1]=green * 255 / max;
+        image[(i*n+j)*3+2]=blue * 255 / max;
     }
 
-    fclose(arq);
+    printf("read image\n");
+
+    return image;
+}
+int main()
+{
+    Imagem * imagem;
+    imagem = lerImagem("Normal2.ppm");
+
     return 0;
 }
