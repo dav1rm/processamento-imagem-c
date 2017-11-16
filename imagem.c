@@ -82,6 +82,47 @@ Imagem *aplicarFiltroCinza(Imagem *imagem)
     return imagem;
 }
 
+Imagem *aplicarFiltroGaussiano(Imagem *imagem)
+{
+    int novopixel;
+    Pixel *p;
+    int sum, div;
+
+    int matriz[5][5] = {{ 2,  4,  5,  4, 2 },
+                        { 4,  9, 12,  9, 4 },
+                        { 5, 12, 15, 12, 5 },
+                        { 4,  9, 12,  9, 4 },
+                        { 2,  4,  5,  4, 2 }};
+
+    printf( "Filtrando Imagem: tipo=P3; altura=%d; largura=%d\n", imagem->altura, imagem->largura);
+
+    Imagem *novaimagem = criarImagem(imagem->altura, imagem->largura, 255); //Crinado a imagem
+
+    for( int i = 0; i < imagem->altura * imagem->largura; i++ )
+    {
+        sum = 0;
+        div = 0;
+
+        for( int y = 0; y < 5; y++ )
+        {
+            for(int x = 0; x < 5; x++ )
+            {
+                p = &(imagem->pixels[i]);
+                sum += (p->r *  matriz[y][x] );
+                div += matriz[y][x];
+            }
+        }
+
+        novopixel = sum / div;
+
+        novaimagem->pixels[i].r = novopixel;
+        novaimagem->pixels[i].g = novopixel;
+        novaimagem->pixels[i].b = novopixel;
+    }
+
+    return novaimagem;
+}
+
 void criarArquivoPpm(char *nome_arquivo, Imagem *imagem)
 {
     FILE *arquivo = fopen(nome_arquivo, "w");                                           //Abrindo arquivo em modo escrita

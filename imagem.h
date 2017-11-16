@@ -23,4 +23,6 @@ Imagem *lerArquivoPpm(char *nome_arquivo);
 
 Imagem *aplicarFiltroCinza(Imagem *imagem);
 
+Imagem *aplicarFiltroGaussiano(Imagem *imagem);
+
 void criarArquivoPpm(char *nome_arquivo, Imagem *imagem);

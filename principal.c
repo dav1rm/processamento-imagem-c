@@ -14,5 +14,10 @@ int main()
 
     criarArquivoPpm("imagem_cinza.ppm", novaImagem);
 
+    Imagem *imagemGaus;
+    imagemGaus = aplicarFiltroGaussiano(novaImagem);
+
+    criarArquivoPpm("imagem_gaus.ppm", imagemGaus);
+
     return 0;
 }
