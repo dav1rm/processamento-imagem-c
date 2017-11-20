@@ -3,7 +3,10 @@
 Imagem *criarImagem(int altura, int largura, int valmax)
 {
     Imagem *imagem = (Imagem *)malloc(sizeof(Imagem));
-    imagem->pixels = (Pixel *)malloc((largura * altura) * sizeof(Pixel));
+    imagem->pixels = (Pixel **)malloc(altura * sizeof(Pixel *));
+    for(int i = 0; i < altura; i++){
+        imagem->pixels[i] = (Pixel *)malloc(largura * sizeof(Pixel));
+	}
     imagem->largura = largura;
     imagem->altura = altura;
     imagem->valmax = valmax;
@@ -50,13 +53,13 @@ Imagem *lerArquivoPpm(char *nome_arquivo)
 
         printf("%d linhas,  %d colunas e valor máximo de cor= %d\n", largura, altura, valmax);
 
-        imagem = criarImagem(largura, altura, valmax); //Crinado a imagem
+        imagem = criarImagem(altura, largura, valmax); //Crinado a imagem
 
         for (int a = 0; a < altura; a++)
         {
             for (int l = 0; l < largura; l++)
             {
-                Pixel *p = &(imagem->pixels[(a * largura) + l]); //Criando cada píxel da imagem
+                Pixel *p = &(imagem->pixels[a][l]);              //Criando cada píxel da imagem
                 fscanf(arquivo, "%d", &(p->r));                  //Definindo o valor de vermelho cada píxel da imagem
                 fscanf(arquivo, "%d", &(p->g));                  //Definindo o valor de verde cada píxel da imagem
                 fscanf(arquivo, "%d", &(p->b));                  //Definindo o valor de azul cada píxel da imagem
@@ -68,15 +71,38 @@ Imagem *lerArquivoPpm(char *nome_arquivo)
     }
 }
 
+Pixel *verificarPixel(Imagem *imagem, int largura, int altura)
+{
+    // Nao permite leitura fora das fronteiras da imagem original
+
+    if( largura >= imagem->largura ){
+        largura = imagem->largura - 1;
+    }
+    if( altura >= imagem->altura ){
+        altura = imagem->altura - 1;
+    }
+    if( largura < 0 ){
+        largura = 0;
+    }
+    if( altura < 0 ){
+        altura = 0;
+    }
+
+    return &imagem->pixels[altura][largura];
+}
+
 Imagem *aplicarFiltroCinza(Imagem *imagem)
 {
     int cinza;
-    for (int i = 0; i < imagem->altura * imagem->largura; i++)
-    {
-        cinza = ((imagem->pixels[i].r)*0.3)+((imagem->pixels[i].g)*0.59)+((imagem->pixels[i].b)*0.11); //Calcula escala de cinza
-        imagem->pixels[i].r = cinza;
-        imagem->pixels[i].g = cinza;
-        imagem->pixels[i].b = cinza;
+    for (int a = 0; a < imagem->altura; a++)
+        {
+        for (int l = 0; l < imagem->largura; l++)
+        {
+            cinza = ((imagem->pixels[a][l].r)*0.3)+((imagem->pixels[a][l].g)*0.59)+((imagem->pixels[a][l].b)*0.11); //Calcula escala de cinza
+            imagem->pixels[a][l].r = cinza;
+            imagem->pixels[a][l].g = cinza;
+            imagem->pixels[a][l].b = cinza;
+        }
     }
 
     return imagem;
@@ -98,40 +124,86 @@ Imagem *aplicarFiltroGaussiano(Imagem *imagem)
 
     Imagem *novaimagem = criarImagem(imagem->altura, imagem->largura, 255); //Crinado a imagem
 
-    for( int i = 0; i < imagem->altura * imagem->largura; i++ )
+    for (int a = 0; a < imagem->altura; a++)
     {
-        sum = 0;
-        div = 0;
-
-        for( int y = 0; y < 5; y++ )
+        for (int l = 0; l < imagem->largura; l++)
         {
-            for(int x = 0; x < 5; x++ )
+            sum = 0;
+            div = 0;
+
+            for( int y = 0; y < 5; y++ )
             {
-                p = &(imagem->pixels[i]);
-                sum += (p->r *  matriz[y][x] );
-                div += matriz[y][x];
+                for(int x = 0; x < 5; x++ )
+                {
+                    p = verificarPixel(imagem,  l + (x - 2), a + (y - 2) );
+                    sum += (p->r *  matriz[y][x] );
+                    div += matriz[y][x];
+                }
             }
+
+            novopixel = sum / div;
+
+            novaimagem->pixels[a][l].r = novopixel;
+            novaimagem->pixels[a][l].g = novopixel;
+            novaimagem->pixels[a][l].b = novopixel;
         }
-
-        novopixel = sum / div;
-
-        novaimagem->pixels[i].r = novopixel;
-        novaimagem->pixels[i].g = novopixel;
-        novaimagem->pixels[i].b = novopixel;
     }
 
     return novaimagem;
 }
 
-void criarArquivoPpm(char *nome_arquivo, Imagem *imagem)
-{
-    FILE *arquivo = fopen(nome_arquivo, "w");                                           //Abrindo arquivo em modo escrita
-    fprintf(arquivo, "P3\n%d %d\n%d", imagem->altura,imagem->largura, imagem->valmax); //Escrevendo o cabeçalho da imagem no arquivo ppm
+Imagem * aplicarFiltroSobel(Imagem *imagem){
+	int horizontal[3][3] = {{-1,-2,-1},
+		                    { 0, 0, 0},
+		                    { 1, 2, 1}};
+
+	int vertical[3][3] = {{-1, 0, 1},
+                          {-2, 0, 2},
+		                  {-1, 0, 1}};
+
+	Imagem  *novaimagem = criarImagem(imagem->altura, imagem->largura, imagem->valmax);
+    Pixel *p;
+
+    int sobelHorizontal, sobelVertical, resultado;
+
     for (int a = 0; a < imagem->altura; a++)
     {
         for (int l = 0; l < imagem->largura; l++)
         {
-            Pixel *p = &(imagem->pixels[(a * imagem->largura) + l]); //Criando cada píxel da imagem
+            sobelVertical = 0;
+            sobelHorizontal = 0;
+            for( int y = 0; y < 3; y++ )
+            {
+                for(int x = 0; x < 3; x++ )
+                {
+                    p = verificarPixel(imagem,  l + (x - 2), a + (y - 2) );
+                    // Pixel *p = &(imagem->pixels[a][l]);
+                    sobelHorizontal += (p->r *  horizontal[y][x] );
+                    sobelVertical += (p->r *  vertical[y][x] );
+                    resultado = sqrt(pow(sobelVertical, 2) + pow(sobelHorizontal, 2));
+
+                    novaimagem->pixels[a][l].r = resultado;
+                    novaimagem->pixels[a][l].g = resultado;
+                    novaimagem->pixels[a][l].b = resultado;
+                }
+            }
+
+
+        }
+    }
+
+	return novaimagem;
+}
+
+void criarArquivoPpm(char *nome_arquivo, Imagem *imagem)
+{
+    FILE *arquivo = fopen(nome_arquivo, "w");                                           //Abrindo arquivo em modo escrita
+    fprintf(arquivo, "P3\n%d %d\n%d", imagem->largura, imagem->altura, imagem->valmax); //Escrevendo o cabeçalho da imagem no arquivo ppm
+    for (int a = 0; a < imagem->altura; a++)
+    {
+        for (int l = 0; l < imagem->largura; l++)
+        {
+            Pixel *p = &(imagem->pixels[a][l]); //Criando cada píxel da imagem
             fprintf(arquivo, "\n%d\n%d\n%d", p->r, p->g, p->b);        //Escrevendo os píxels no arquivo ppm
         }
     }
