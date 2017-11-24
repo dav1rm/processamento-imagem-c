@@ -7,7 +7,7 @@
 int main()
 {
     Imagem *imagem;
-    imagem = lerArquivoPpm("Normal2.ppm");
+    imagem = lerArquivoPpm("Catarata2.ppm");
 
     Imagem *novaImagem;
     novaImagem = aplicarFiltroCinza(imagem);
@@ -23,6 +23,11 @@ int main()
     imagemSobel = aplicarFiltroSobel(imagemGaus);
 
     criarArquivoPpm("imagem_sobel.ppm", imagemSobel);
+
+    Imagem *imagemBinarizada;
+    imagemBinarizada = aplicarBinarizacao(imagemSobel);
+
+    criarArquivoPpm("imagem_binarizada.ppm", imagemBinarizada);
 
     return 0;
 }

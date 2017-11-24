@@ -30,4 +30,6 @@ Imagem *aplicarFiltroGaussiano(Imagem *imagem);
 
 Imagem *aplicarFiltroSobel(Imagem *imagem);
 
+Imagem * aplicarBinarizacao(Imagem *imagem);
+
 void criarArquivoPpm(char *nome_arquivo, Imagem *imagem);

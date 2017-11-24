@@ -195,6 +195,35 @@ Imagem * aplicarFiltroSobel(Imagem *imagem){
 	return novaimagem;
 }
 
+Imagem * aplicarBinarizacao(Imagem *imagem) {
+
+    int mediaPixel;
+
+    Imagem  *novaimagem = criarImagem(imagem->altura, imagem->largura, imagem->valmax);
+    Pixel *p;
+
+    for(int a = 0; a < imagem->altura; a++) {
+        for(int l = 0; l < imagem->largura; l++) {
+
+            mediaPixel = (int)(imagem->pixels[a][l].r + imagem->pixels[a][l].g + imagem->pixels[a][l].b)/3;
+
+            if(mediaPixel <= 13) {
+                novaimagem->pixels[a][l].r = 0;
+                novaimagem->pixels[a][l].g = 0;
+                novaimagem->pixels[a][l].b = 0;
+            }
+            if(mediaPixel > 13) {
+                novaimagem->pixels[a][l].r = 255;
+                novaimagem->pixels[a][l].g = 255;
+                novaimagem->pixels[a][l].b = 255;
+            }
+        }
+    }
+
+    return novaimagem;
+}
+
+
 void criarArquivoPpm(char *nome_arquivo, Imagem *imagem)
 {
     FILE *arquivo = fopen(nome_arquivo, "w");                                           //Abrindo arquivo em modo escrita
