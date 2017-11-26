@@ -6,8 +6,23 @@
 
 int main()
 {
+    /*
+    Código para executar: 
+
+    gcc -std=c99 -c imagem.c -lm
+    gcc -std=c99 -o principal imagem.o principal.c -lm
+    ./principal
+
+    Ou..
+
+    gcc -c imagem.c -lm
+    gcc -o principal imagem.o principal.c -lm
+    ./principal
+
+    */
+
     Imagem *imagem;
-    imagem = lerArquivoPpm("Catarata2.ppm");
+    imagem = lerArquivoPpm("Normal.ppm");
 
     Imagem *novaImagem;
     novaImagem = aplicarFiltroCinza(imagem);
@@ -28,6 +43,12 @@ int main()
     imagemBinarizada = aplicarBinarizacao(imagemSobel);
 
     criarArquivoPpm("imagem_binarizada.ppm", imagemBinarizada);
+
+    Imagem *imagemHough;
+    imagem = lerArquivoPpm("Normal.ppm");
+    imagemHough = aplicarTransformadaHough(imagemBinarizada, imagem);
+
+    criarArquivoPpm("imagem_hough.ppm", imagemHough);
 
     return 0;
 }

@@ -3,6 +3,8 @@
 #include <math.h>
 #include <string.h>
 
+# define M_PI 3.14159265358979323846
+
 typedef struct Pixel
 {
     int r;
@@ -33,3 +35,5 @@ Imagem *aplicarFiltroSobel(Imagem *imagem);
 Imagem * aplicarBinarizacao(Imagem *imagem);
 
 void criarArquivoPpm(char *nome_arquivo, Imagem *imagem);
+
+Imagem *aplicarTransformadaHough(Imagem *imagem, Imagem *original);
