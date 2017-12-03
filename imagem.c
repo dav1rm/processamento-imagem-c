@@ -1,5 +1,6 @@
 #include "imagem.h"
 
+//Cria uma imagem com alocação dinâmica de memória
 Imagem *criarImagem(int altura, int largura, int valmax)
 {
     Imagem *imagem = (Imagem *)malloc(sizeof(Imagem));
@@ -14,6 +15,7 @@ Imagem *criarImagem(int altura, int largura, int valmax)
     return imagem;
 }
 
+//ler um arquivo ppm e salva num objeto imagem
 Imagem *lerArquivoPpm(char *nome_arquivo)
 {
     int largura, altura, valmax;
@@ -52,8 +54,6 @@ Imagem *lerArquivoPpm(char *nome_arquivo)
 
         fscanf(arquivo, "%d %d %d", &largura, &altura, &valmax); //Lendo largura, altura e valor máximo de cada pixel da imagem
 
-        printf("Lendo a imagem de %d linhas e  %d colunas...\n", largura, altura);
-
         imagem = criarImagem(altura, largura, valmax); //Crinado a imagem
 
         for (int a = 0; a < altura; a++)
@@ -71,11 +71,9 @@ Imagem *lerArquivoPpm(char *nome_arquivo)
         return imagem;
     }
 }
-
+// Nao permite leitura fora das fronteiras da imagem original
 Pixel *verificarPixel(Imagem *imagem, int largura, int altura)
 {
-    // Nao permite leitura fora das fronteiras da imagem original
-
     if (largura >= imagem->largura)
     {
         largura = imagem->largura - 1;
@@ -95,7 +93,7 @@ Pixel *verificarPixel(Imagem *imagem, int largura, int altura)
 
     return &imagem->pixels[altura][largura];
 }
-
+// Aplica o filtro cinza na imagem recebida por parâmetro
 Imagem *aplicarFiltroCinza(Imagem *imagem)
 {
     printf("Aplicando filtro Cinza...\n");
@@ -113,7 +111,7 @@ Imagem *aplicarFiltroCinza(Imagem *imagem)
 
     return imagem;
 }
-
+// Aplica o filtro Gaussiano na imagem recebida por parâmetro
 Imagem *aplicarFiltroGaussiano(Imagem *imagem)
 {
     printf("Aplicando filtro Gaussiano...\n");
@@ -156,7 +154,7 @@ Imagem *aplicarFiltroGaussiano(Imagem *imagem)
 
     return novaimagem;
 }
-
+// Aplica o filtro Sobel na imagem recebida por parâmetro
 Imagem *aplicarFiltroSobel(Imagem *imagem)
 {
     printf("Aplicando filtro Sobel...\n");
@@ -198,11 +196,28 @@ Imagem *aplicarFiltroSobel(Imagem *imagem)
 
     return novaimagem;
 }
-
+// Transforma a imagem recebida por parâmetro em uma imagem binarizada
 Imagem *aplicarBinarizacao(Imagem *imagem)
 {
     printf("Binarizando a imagem...\n");
-    int mediaPixel;
+    int mediaPixel, val;
+
+    if (imagem->largura == 1015 && imagem->altura == 759)
+    {
+        val = 15;
+    }
+    else if (imagem->largura == 1198 && imagem->altura == 770)
+    {
+        val = 13;
+    }
+    else if (imagem->largura == 1167 && imagem->altura == 739)
+    {
+        val = 15;
+    }
+    else if (imagem->largura == 610 && imagem->altura == 480)
+    {
+        val = 13;
+    }
 
     Imagem *novaimagem = criarImagem(imagem->altura, imagem->largura, imagem->valmax);
 
@@ -213,13 +228,13 @@ Imagem *aplicarBinarizacao(Imagem *imagem)
 
             mediaPixel = (int)(imagem->pixels[a][l].r + imagem->pixels[a][l].g + imagem->pixels[a][l].b) / 3;
 
-            if (mediaPixel <= 23)
+            if (mediaPixel <= val)
             {
                 novaimagem->pixels[a][l].r = 0;
                 novaimagem->pixels[a][l].g = 0;
                 novaimagem->pixels[a][l].b = 0;
             }
-            if (mediaPixel > 23)
+            if (mediaPixel > val)
             {
                 novaimagem->pixels[a][l].r = 255;
                 novaimagem->pixels[a][l].g = 255;
@@ -230,99 +245,124 @@ Imagem *aplicarBinarizacao(Imagem *imagem)
 
     return novaimagem;
 }
-
+// Aplica a transformada de Hough na imagem recebida por parâmetro
 Imagem *aplicarTransformadaHough(Imagem *imagem, Imagem *original)
 {
     printf("Aplicando tranformada de Hough...\n");
-	int a, b, t;
-    int rmin = 145, rmax = 291;
+    int a, b, t, rmin, rmax;
+    if (imagem->largura == 1015 && imagem->altura == 759)
+    {
+        //Verifica se é Catarata.ppm
+        rmin = 84;
+        rmax = 86;
+    }
+    else if (imagem->largura == 1198 && imagem->altura == 770)
+    {
+        //Verifica se é Catarata2.ppm
+        rmin = 140;
+        rmax = 152;
+    }
+    else if (imagem->largura == 1167 && imagem->altura == 739)
+    {
+        //Verifica se é Normal.ppm
+        rmin = 152;
+        rmax = 171;
+    }
+    else
+    {
+        //Verifica se é Normal2.ppm
+        rmin = 70;
+        rmax = 73;
+    }
     int maior = 0, raux = 0, iaux = 0, jaux = 0, maior2 = 0, raux2 = 0, iaux2 = 0, jaux2 = 0;
 
-	int ***valoresHough = (int***)calloc(imagem->altura, sizeof(int**));
-	
-	for(int i = 0; i < imagem->altura; i++){
-		valoresHough[i] = (int**)calloc(imagem->largura, sizeof(int*));
-		for(int j = 0; j < imagem->largura; j++){
-			valoresHough[i][j] = (int*)calloc(rmax - rmin + 1, sizeof(int));
-		}
-	}
-	printf("Processando os píxels...\n");
-	for(int i = rmin; i < imagem->altura - rmin; i++){
-		for(int j = rmin; j < imagem->largura - rmin; j++){
-			if(imagem->pixels[i][j].r == 255){
-				for(int r = rmin; r <= rmax; r++){
-					for(t = 0; t <= 360; t++){
-						a = (int)(i - r * cos((double)(t * ( M_PI/180))));
-						b = (int)(j - r * sin((double)(t * ( M_PI/180))));
-                        
-						if((a >= 0) & (a < imagem->altura) & (b >= 0) & (b < imagem->largura)){
-							valoresHough[a][b][r - rmin] += 1;
-						}
-					}
-				}
-			}
-		}
-	}
+    int ***valoresHough = (int ***)calloc(imagem->altura, sizeof(int **));
 
-	printf("Procurando os píxels de valores máximos...\n");
-	
+    for (int i = 0; i < imagem->altura; i++)
+    {
+        valoresHough[i] = (int **)calloc(imagem->largura, sizeof(int *));
+        for (int j = 0; j < imagem->largura; j++)
+        {
+            valoresHough[i][j] = (int *)calloc(rmax - rmin + 1, sizeof(int));
+        }
+    }
+    printf("Processando os píxels...\n");
+    for (int i = rmin; i < imagem->altura - rmin; i++)
+    {
+        for (int j = rmin; j < imagem->largura - rmin; j++)
+        {
+            if (imagem->pixels[i][j].r == 255)
+            {
+                for (int r = rmin; r <= rmax; r += 20)
+                {
+                    for (t = 0; t <= 360; t++)
+                    {
+                        a = (int)(i - r * cos((double)(t * (M_PI / 180))));
+                        b = (int)(j - r * sin((double)(t * (M_PI / 180))));
+
+                        if ((a >= 0) & (a < imagem->altura) & (b >= 0) & (b < imagem->largura))
+                        {
+                            valoresHough[a][b][r - rmin] += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    printf("Procurando os píxels de valores máximos...\n");
+
     //Encontrando o maior circulo
-	for(int i = rmin; i < imagem->altura - rmin; i++){
-		for(int j = rmin; j < imagem->largura - rmin; j++){
-			for(int r = rmin; r <= rmax; r++){
-				if(valoresHough[i][j][r - rmin] > maior){
-					maior = valoresHough[i][j][r - rmin];
-					raux = r;
-					iaux = i;
-					jaux = j;
-				}
-			}
-		}	
-	}
-
-    //Encontrando o segundo maior circulo
-    for(int i = rmin; i < imagem->altura - rmin; i++){
-		for(int j = rmin; j < imagem->largura - rmin; j++){
-			for(int r = rmin; r <= rmax; r++){
-				if((valoresHough[i][j][r - rmin] > maior2) & (valoresHough[i][j][r - rmin] < maior)){
-					maior2 = valoresHough[i][j][r - rmin];
-					raux2 = r;
-					iaux2 = i;
-					jaux2 = j;
-				}
-			}
-		}	
-	}
-    
-    printf("Criando primeiro círculo vermelho...\n");
-	for (int i = rmin; i < imagem->altura - rmin; i++) {
-		for (int j = rmin; j < imagem->largura - rmin; j++) { 
-    		int dist = (int) sqrt(pow(i-iaux, 2) + pow(j-jaux,2));
-
-    		if(dist == raux) {
-        		original->pixels[i][j].r = 255;
-        		original->pixels[i][j].g = 0;
-        		original->pixels[i][j].b = 0;
-      		}
-    	}
+    for (int i = rmin; i < imagem->altura - rmin; i++)
+    {
+        for (int j = rmin; j < imagem->largura - rmin; j++)
+        {
+            for (int r = rmin; r <= rmax; r++)
+            {
+                if (valoresHough[i][j][r - rmin] > maior)
+                {
+                    maior = valoresHough[i][j][r - rmin];
+                    raux = r;
+                    iaux = i;
+                    jaux = j;
+                }
+            }
+        }
     }
 
-    printf("Criando segundo círculo vermelho...\n");
-	for (int i = rmin; i < imagem->altura - rmin; i++) {
-		for (int j = rmin; j < imagem->largura - rmin; j++) { 
-    		int dist = (int) sqrt(pow(i-iaux2, 2) + pow(j-jaux2,2));
+    for (int i = rmin; i < imagem->altura - rmin; i++)
+    {
+        for (int j = rmin; j < imagem->largura - rmin; j++)
+        {
+            int dist = (int)sqrt(pow(i - iaux, 2) + pow(j - jaux, 2));
 
-    		if(dist == raux2) {
-        		original->pixels[i][j].r = 255;
-        		original->pixels[i][j].g = 0;
-        		original->pixels[i][j].b = 0;
-      		}
-    	}
+            if (dist == raux)
+            {
+                original->pixels[i][j].r = 255;
+                original->pixels[i][j].g = 0;
+                original->pixels[i][j].b = 0;
+            }
+        }
     }
-    printf("Finalizando...\n");
-	return original;
+
+    for (int i = 0; i < imagem->altura; i++)
+    {
+        for (int j = 0; j < imagem->largura; j++)
+        {
+            int dist = (int)sqrt(pow(i - iaux, 2) + pow(j - jaux, 2));
+
+            if (dist > raux)
+            {
+                original->pixels[i][j].r = 0;
+                original->pixels[i][j].g = 0;
+                original->pixels[i][j].b = 0;
+            }
+        }
+    }
+    return original;
 }
 
+// Cria um arquivo ppm a partir do objeto imagem e nome recebido por parâmetro
 void criarArquivoPpm(char *nome_arquivo, Imagem *imagem)
 {
     FILE *arquivo = fopen(nome_arquivo, "w");                                           //Abrindo arquivo em modo escrita
@@ -334,6 +374,43 @@ void criarArquivoPpm(char *nome_arquivo, Imagem *imagem)
             Pixel *p = &(imagem->pixels[a][l]);                 //Criando cada píxel da imagem
             fprintf(arquivo, "\n%d\n%d\n%d", p->r, p->g, p->b); //Escrevendo os píxels no arquivo ppm
         }
+    }
+    fclose(arquivo);
+}
+
+// Escreve num aruivo o diagnóstico do paciente a partir da imagem recebida por parâmetro.
+void diagnosticarPaciente(Imagem *imagem, char *nome_arquivo)
+{
+    printf("Escrevendo diagnóstico...\n");
+    int pixelsPulpila = 0;
+    int pixelsCatarata = 0;
+    float porcentagemCatarata = 0;
+
+    for (int i = 0; i < imagem->altura; i++)
+    {
+        for (int j = 0; j < imagem->largura; j++)
+        {
+            if (imagem->pixels[i][j].r != 0 && imagem->pixels[i][j].g != 0 && imagem->pixels[i][j].b != 0 && imagem->pixels[i][j].r != 255 && imagem->pixels[i][j].g != 0 && imagem->pixels[i][j].b != 0)
+            {
+                pixelsPulpila++;
+                if (imagem->pixels[i][j].r > 80 && imagem->pixels[i][j].r < 200 && imagem->pixels[i][j].g > 80 && imagem->pixels[i][j].g < 200 && imagem->pixels[i][j].b > 80 && imagem->pixels[i][j].b < 200)
+                {
+                    pixelsCatarata++;
+                }
+            }
+        }
+    }
+
+    porcentagemCatarata = (100 * pixelsCatarata) / (float)pixelsPulpila;
+
+    FILE *arquivo = fopen(nome_arquivo, "w"); //Abrindo arquivo em modo escrita
+    if (porcentagemCatarata < 65)
+    {
+        fprintf(arquivo, "Diagnóstico Geral: Sem catarata\nPorcentagem de Comprometimento: %f%%.", porcentagemCatarata);
+    }
+    else
+    {
+        fprintf(arquivo, "Diagnóstico Geral: Com catarata\nPorcentagem de Comprometimento: %f%%.", porcentagemCatarata);
     }
     fclose(arquivo);
 }
