@@ -204,18 +204,22 @@ Imagem *aplicarBinarizacao(Imagem *imagem)
 
     if (imagem->largura == 1015 && imagem->altura == 759)
     {
+        //Verifica se é Catarata.ppm
         val = 15;
     }
     else if (imagem->largura == 1198 && imagem->altura == 770)
     {
+        //Verifica se é Catarata2.ppm
         val = 13;
     }
     else if (imagem->largura == 1167 && imagem->altura == 739)
     {
+        //Verifica se é Normal.ppm
         val = 15;
     }
     else if (imagem->largura == 610 && imagem->altura == 480)
     {
+        //Verifica se é Normal2.ppm
         val = 13;
     }
 
@@ -276,8 +280,8 @@ Imagem *aplicarTransformadaHough(Imagem *imagem, Imagem *original)
     }
     int maior = 0, raux = 0, iaux = 0, jaux = 0, maior2 = 0, raux2 = 0, iaux2 = 0, jaux2 = 0;
 
+    //Alocação de memória para matriz
     int ***valoresHough = (int ***)calloc(imagem->altura, sizeof(int **));
-
     for (int i = 0; i < imagem->altura; i++)
     {
         valoresHough[i] = (int **)calloc(imagem->largura, sizeof(int *));
@@ -286,6 +290,7 @@ Imagem *aplicarTransformadaHough(Imagem *imagem, Imagem *original)
             valoresHough[i][j] = (int *)calloc(rmax - rmin + 1, sizeof(int));
         }
     }
+    //Votação dos melhores valores para circulos
     printf("Processando os píxels...\n");
     for (int i = rmin; i < imagem->altura - rmin; i++)
     {
@@ -329,7 +334,8 @@ Imagem *aplicarTransformadaHough(Imagem *imagem, Imagem *original)
             }
         }
     }
-
+    
+    //Criando circulo vermelho
     for (int i = rmin; i < imagem->altura - rmin; i++)
     {
         for (int j = rmin; j < imagem->largura - rmin; j++)
@@ -344,7 +350,8 @@ Imagem *aplicarTransformadaHough(Imagem *imagem, Imagem *original)
             }
         }
     }
-
+    
+    //Deixando os pixels de fora da pulpila pretos
     for (int i = 0; i < imagem->altura; i++)
     {
         for (int j = 0; j < imagem->largura; j++)
@@ -402,7 +409,8 @@ void diagnosticarPaciente(Imagem *imagem, char *nome_arquivo)
     }
 
     porcentagemCatarata = (100 * pixelsCatarata) / (float)pixelsPulpila;
-
+    
+    //Escrevendo diagnóstico
     FILE *arquivo = fopen(nome_arquivo, "w"); //Abrindo arquivo em modo escrita
     if (porcentagemCatarata < 65)
     {
